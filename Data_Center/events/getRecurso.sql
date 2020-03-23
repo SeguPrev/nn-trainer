@@ -1,0 +1,1 @@
+SELECT * FROM [dbo].[Recursos] WHERE [dbo].[Recursos].[Serie] = @Serie
