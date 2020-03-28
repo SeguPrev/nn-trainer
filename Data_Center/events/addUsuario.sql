@@ -7,8 +7,8 @@ INSERT INTO [dbo].[Usuarios] (
 )
 VALUES (
     @email
-    , @Nombre
-    , @Pass
-    , @Telefono
-    , @Tipo
+    , @name
+    , @pass
+    , @tel
+    , @type
 );

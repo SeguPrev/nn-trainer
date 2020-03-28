@@ -1,2 +1,2 @@
-SELECT * FROM [dbo].[Usuarios] WHERE [email] = @userId
+SELECT * FROM [dbo].[Usuarios] WHERE [email] = @email
 AND [Pass] = @pass

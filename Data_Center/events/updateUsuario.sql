@@ -1,7 +1,7 @@
 UPDATE [dbo].[Usuarios] 
 SET 
-[Nombre] = @Nombre
-, [Pass] = @Pass
-, [Telefono] = @Telefono
-, [Tipo] = @Tipo
+[Nombre] = @name
+, [Pass] = @pass
+, [Telefono] = @tel
+, [Tipo] = @type
 WHERE [email] = @email

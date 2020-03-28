@@ -1,98 +1,53 @@
 const express = require('express');
-const utils = require( "./Data_Center/utils" );
 const cors = require('cors');
+const path = require('path');
 
-let app = express();
+const DBEngine = require('./Data_Center/dbengine.js');
+const MapGuider = require('./neural_network/mapguider.js');
+
+const PORT = process.env.PORT || 5000;
+const dbengine = new DBEngine();
+const guider = new MapGuider([1,2,3,4]);
 const corsConfig = {
     origin: "*"
 };
-app.use(cors(corsConfig));
-app.use(express.json())
-let sql = require('mssql');
 
-const config = {
-        user: 'sa',
-        password: '123456789',
-        server: 'MSI',
-        database: 'SeguPrev'
-    };
+let app = express();
+app.use(cors(corsConfig));
+app.use(express.json());
+
+const setconfig = async function() {
+  await dbengine.loadQueries();
+  guider.import();
+};
+
  /*********************************************************************
    *                            Usuarios                               *
    **********************************************************************/
 
 app.post('/api/addUsuario',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const user = req.body.user;
-        request.input( "Clave", sql.VarChar( 12 ), user.clave );
-        request.query(sqlQueries.getPreregistro, function (err, recordset){
-            if (err) console.log(err);
-            if(recordset.recordset.length == 1){
-                var requestSecond = new sql.Request();
-                requestSecond.input( "email", sql.VarChar( 35 ), user.email );
-                requestSecond.input( "Nombre", sql.VarChar( 45 ), user.nombre );
-                requestSecond.input( "Pass", sql.VarChar( 18 ), user.pass );
-                requestSecond.input( "Telefono", sql.VarChar (10), user.telefono );
-                requestSecond.input( "Tipo", sql.Int, user.tipo );
-                requestSecond.query(sqlQueries.addUsuario, function (err, recordset){
-                    console.log(recordset);
-                    if (err) console.log(err);
-                    res.send(JSON.stringify({result: recordset}));
-                });
-            }
-            else{
-                res.send(JSON.stringify({ msg: 'Martin puto' }));
-            }
-        });
-    });
+  const user = req.body.user;
+  const key = req.body.key;
+
+  const verify = await dbengine.script(dbengine.sqlQueries.getPreregistro, key);
+  let result = [];
+
+  if(verify.length == 1)
+    result = await dbengine.script(dbengine.sqlQueries.addUsuario, user);
+
+  res.send(JSON.stringify((result == undefined) ? [] : result));
 });
 
 app.post('/api/updateUsuario',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const user = req.body.user;
-        request.input( "email", sql.VarChar( 35 ), user.email );
-        request.input( "Nombre", sql.VarChar( 45 ), user.nombre );
-        request.input( "Pass", sql.VarChar( 18 ), user.pass );
-        request.input( "Telefono", sql.VarChar (10), user.telefono );
-        request.input( "Tipo", sql.VarChar (10), user.tipo );
-        request.query(sqlQueries.updateUsuario, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
+  const user = req.body.user;
+  const result = await dbengine.script(db.sqlQueries.updateUsuario, user);
+  res.send(JSON.stringify(result));
 });
 
 app.post('/api/deleteUsuario',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const user = req.body.user;
-        request.input( "email", sql.VarChar( 35 ), user.email );
-        request.query(sqlQueries.deleteUsuario, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
 });
 
-app.post('/api/getUsuario',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const user = req.body.user;
-        request.input( "userId", sql.VarChar( 35 ), user.email );
-        request.query(sqlQueries.getEvents, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset.recordset}));
-        });
-    });
+app.post('/api/getUsuario',async function(req, res) {
 });
 
  /*********************************************************************
@@ -100,51 +55,12 @@ app.post('/api/getUsuario',async function(req, res){
    **********************************************************************/
 
 app.post('/api/addZonas',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const zone = req.body.zone;
-        request.input( "Nombre", sql.VarChar( 35 ), zone.nombre );
-        request.input( "Direccion", sql.VarChar( 45 ), zone.direccion );
-        request.input( "Latitud", sql.Float, zone.latitud );
-        request.input( "Longitud", sql.Float, zone.longitud );
-        request.query(sqlQueries.addZonas, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
 });
 
 app.post('/api/updateZonas',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const zone = req.body.zone;
-        request.input( "Nombre", sql.VarChar( 35 ), zone.nombre );
-        request.input( "Direccion", sql.VarChar( 45 ), zone.direccion );
-        request.input( "Latitud", sql.Float, zone.latitud );
-        request.input( "Longitud", sql.Float, zone.longitud );
-        request.query(sqlQueries.updateZonas, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
 });
 
 app.post('/api/deleteZonas',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const zone = req.body.zone;
-        request.input( "Nombre", sql.VarChar( 35 ), zone.nombre );
-        request.query(sqlQueries.deleteUsuario, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
 });
 
  /*********************************************************************
@@ -152,47 +68,12 @@ app.post('/api/deleteZonas',async function(req, res){
    **********************************************************************/
 
 app.post('/api/addCategorias',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const categories = req.body.categories;
-        request.input( "Nombre", sql.VarChar( 35 ), categories.nombre );
-        request.input( "Nivel", sql.Int, categories.nivel );
-        request.query(sqlQueries.addCategorias, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
 });
 
 app.post('/api/updateCategorias',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const categories = req.body.categories;
-        request.input( "Nombre", sql.VarChar( 35 ), categories.nombre );
-        request.input( "Nivel", sql.Int, categories.nivel );
-        request.query(sqlQueries.updateCategorias, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
 });
 
 app.post('/api/deleteCategorias',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const categories = req.body.categories;
-        request.input( "Nombre", sql.VarChar( 35 ), categories.nombre );
-        request.query(sqlQueries.deleteCategorias, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
 });
 
  /*********************************************************************
@@ -200,51 +81,12 @@ app.post('/api/deleteCategorias',async function(req, res){
    **********************************************************************/
 
 app.post('/api/addEvento',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const event = req.body.event;
-        request.input( "Id", sql.VarChar( 12 ), event.id );
-        request.input( "Zona", sql.VarChar( 35 ), event.zona );
-        request.input( "Tipo", sql.VarChar( 35 ), event.tipo );
-        request.input( "Hora", sql.DateTime, event.hora );
-        request.query(sqlQueries.addEvento, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
 });
 
 app.post('/api/updateEvento',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const event = req.body.event;
-        request.input( "Id", sql.VarChar( 12 ), event.id );
-        request.input( "Zona", sql.VarChar( 35 ), event.zona );
-        request.input( "Tipo", sql.VarChar( 35 ), event.tipo );
-        request.input( "Hora", sql.DateTime, event.hora );
-        request.query(sqlQueries.updateEventos, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
 });
 
 app.post('/api/deleteEvento',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const event = req.body.event;
-        request.input( "Id", sql.VarChar( 12 ), event.id );
-        request.query(sqlQueries.deleteEventos, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
 });
 
  /*********************************************************************
@@ -252,45 +94,12 @@ app.post('/api/deleteEvento',async function(req, res){
    **********************************************************************/
 
 app.post('/api/addPreregistro',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const pre = req.body.pre;
-        request.input( "Clave", sql.VarChar( 35 ), pre.clave );
-        request.query(sqlQueries.addPreregistro, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
 });
 
 app.post('/api/deletePreregistro',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const pre = req.body.pre;
-        request.input( "Clave", sql.VarChar( 35 ), pre.clave );
-        request.query(sqlQueries.deletePreregistro, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
 });
 
 app.post('/api/getPreregistro',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const pre = req.body.pre;
-        request.input( "Clave", sql.VarChar( 35 ), pre.clave );
-        request.query(sqlQueries.getPreregistro, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset.recordset}));
-        });
-    });
 });
 
  /*********************************************************************
@@ -298,75 +107,20 @@ app.post('/api/getPreregistro',async function(req, res){
    **********************************************************************/
 
 app.post('/api/addRecurso',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const event = req.body.event;
-        request.input( "Serie", sql.VarChar( 12 ), event.serie );
-        request.input( "Latitud", sql.VarChar( 35 ), event.latitud );
-        request.input( "Longitud", sql.VarChar( 35 ), event.Longitud );
-        request.query(sqlQueries.addRecurso, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
 });
 
 app.post('/api/updateRecurso',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const event = req.body.event;
-        request.input( "Serie", sql.VarChar( 12 ), event.serie );
-        request.input( "Latitud", sql.VarChar( 35 ), event.latitud );
-        request.input( "Longitud", sql.VarChar( 35 ), event.Longitud );
-        request.query(sqlQueries.updateRecurso, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
 });
 
 app.post('/api/deleteRecurso',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const event = req.body.event;
-        request.input( "Serie", sql.VarChar( 12 ), event.serie );
-        request.query(sqlQueries.deleteEventos, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset}));
-        });
-    });
 });
 
 app.post('/api/getRecurso',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const user = req.body.user;
-        request.input( "Serie", sql.VarChar( 35 ), user.serie );
-        request.query(sqlQueries.getRecurso, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset.recordset}));
-        });
-    });
 });
 
 app.post('/api/getAllRecursos',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        request.query(sqlQueries.getAllRecursos, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset.recordset}));
-        });
-    });
+  const result = await dbengine.script(dbengine.sqlQueries.getAllRecursos, []);
+  res.send(JSON.stringify(result));
 });
 
  /*********************************************************************
@@ -374,32 +128,50 @@ app.post('/api/getAllRecursos',async function(req, res){
    **********************************************************************/
 
 app.post('/api/getLogin',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        const user = req.body.user;
-        request.input( "userId", sql.VarChar( 35 ), user.email );
-        request.input( "pass", sql.VarChar( 35 ), user.pass );
-        request.query(sqlQueries.queryLogin, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset.recordset}));
-        });
-    });
+  const user = req.body.user;
+
+  const result = await dbengine.script(dbengine.sqlQueries.queryLogin, user);
+  res.send(JSON.stringify(result[0]));
 });
 
 app.post('/api/getEventos',async function(req, res){
-    const sqlQueries = await utils.loadSqlQueries( "Data_Center/events" );
-    sql.connect(config,function(err){
-        if(err) console.error(err);
-        var request = new sql.Request();
-        request.query(sqlQueries.getEventos, function (err, recordset){
-            if (err) console.log(err);
-            res.send(JSON.stringify({result: recordset.recordset}));
-        });
-    });
+  const result = await dbengine.script(dbengine.sqlQueries.getEventos, []);
+  res.send(JSON.stringify(result));
 });
 
-let server = app.listen(5000, function () {
-    console.log('Server is running..');
+app.post('/train', function(req, res) {
+  const events = req.body.events;
+  let bundle_test = [];
+
+  for(let i = 0; i < events.length; i++) {
+    bundle_test.push([events[i].asesinatos, events[i].violaciones,
+      events[i].balaceras, events[i].robos]);
+  }
+
+  for(let i = 0; i < events.length; i++)
+    guider.train(bundle_test[i], events[i].type);
+
+  res.send(JSON.stringify({ stats: 200 }));
+});
+
+app.post('/predict', function(req, res) {
+  const events = req.body.events;
+  let bundle_test = [];
+
+  for(let i = 0; i < events.length; i++) {
+    bundle_test.push([events[i].asesinatos, events[i].violaciones,
+      events[i].balaceras, events[i].robos]);
+  }
+
+  res.send(JSON.stringify(guider.predict(bundle_test[0])));
+});
+
+app.post('/saveconf', function(req, res) {
+  guider.export();
+  res.send(JSON.stringify({ stats: 200 }));
+});
+
+let server = app.listen(PORT, async function () {
+  await setconfig();
+  console.log(`SeguPrev server running on ${PORT}`);
 });

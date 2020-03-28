@@ -1,3 +1,3 @@
 SELECT *
 FROM [dbo].[Preregistro]
-WHERE [Clave] = @Clave
+WHERE [Clave] = @key
