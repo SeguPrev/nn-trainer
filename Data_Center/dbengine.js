@@ -5,10 +5,13 @@ class DBEngine {
   constructor() {
     this.sqlQueries = null;
     this.authenticator_sqlserver = {
-        user: 'SA',
-        password: '@Renn(E=mcc)',
-        server: 'localhost',
-        database: 'SeguPrev'
+        user: 'sa',
+        password: 'pelemarley23',
+        server: 'LAPTOP-KB07PLPC',
+        database: 'SeguPrev',
+        options: {
+          trustedConnection: true,
+        },
     };
   }
 

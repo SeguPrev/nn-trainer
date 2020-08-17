@@ -3,9 +3,9 @@ const fs = require('fs');
 
 class MapGuider {
   constructor(categories) {
-    const inputs_nodes = categories.length;
-    const hidden_nodes = 6;
-    const outputs_nodes = categories.length;
+    const inputs_nodes = 4;
+    const hidden_nodes = 4;
+    const outputs_nodes = 1;
 
     this.nn = new NeuralNetwork(
       inputs_nodes,
@@ -14,21 +14,56 @@ class MapGuider {
     );
   }
 
-  train(inputs, type) {
-    let target = 0;
-    if(type == 0)
-      target = [1,1,0,0];
-    else if(type == 1)
-      target = [0, 0, 1, 1];
+  normalize(matrix) {
+    const exclude_target = matrix.slice(0, matrix.length-1);
+    const min_val = this.min(exclude_target);
+    const max_val = this.max(exclude_target);
 
-    this.nn.train(inputs, target);
+    exclude_target.forEach((element) => {
+        element[0] = (element[0] - min_val)/(max_val - min_val);
+        element[1] = (element[1] - min_val)/(max_val - min_val);
+        element[2] = (element[2] - min_val)/(max_val - min_val);
+        element[3] = (element[3] - min_val)/(max_val - min_val)
+    });
+    return matrix;
+  }
+
+  min(matrix) {
+    let min = 10000;
+    matrix.forEach((row) => {
+      row.forEach((element) => {
+        if(element < min)
+          min = element;
+      });
+    });
+    return min;
+  }
+
+  max(matrix) {
+    let max = -1;
+    matrix.forEach((row) => {
+      row.forEach((element) => {
+        if(element > max)
+          max = element;
+      });
+    });
+    return max;
+  }
+
+  train(inputs) {
+    // console.log(inputs.slice(0, inputs.length-1));
+    // console.log(inputs[inputs.length-1]);
+    this.nn.train(
+      inputs.slice(0, inputs.length-1),
+      [inputs[inputs.length-1]]
+    );
   }
 
   predict(inputs) {
-    const response = this.nn.predict(inputs);
-    let m = Math.max.apply(null, response);
+    console.log(inputs.slice(0, inputs.length-1));
+    const response = this.nn.predict(inputs.slice(0, inputs.length-1));
 
-    if(response.indexOf(m) == 0 || response.indexOf(m) == 1)
+    if(response[0] > 0.50)
       console.log('Important', response);
     else
       console.log('No important', response);

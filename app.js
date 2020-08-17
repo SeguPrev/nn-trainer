@@ -1,9 +1,11 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const DBEngine = require('./Data_Center/dbengine.js');
 const MapGuider = require('./neural_network/mapguider.js');
+const { raw } = require('express');
 
 const PORT = process.env.PORT || 5000;
 const dbengine = new DBEngine();
@@ -20,6 +22,14 @@ const setconfig = async function() {
   await dbengine.loadQueries();
   guider.import();
 };
+
+let rawdata = fs.readFileSync("train.json");
+let trainset = JSON.parse(rawdata);
+let normalize = guider.normalize(trainset);
+
+normalize.forEach(element => {
+  guider.train(element);
+});
 
  /*********************************************************************
    *                            Usuarios                               *
@@ -141,29 +151,24 @@ app.post('/api/getEventos',async function(req, res){
 
 app.post('/train', function(req, res) {
   const events = req.body.events;
-  let bundle_test = [];
-
-  for(let i = 0; i < events.length; i++) {
-    bundle_test.push([events[i].asesinatos, events[i].violaciones,
-      events[i].balaceras, events[i].robos]);
-  }
+  // const normalize_array = guider.normalize(events);
+  // console.log(events);
+  // console.log(normalize_array);
 
   for(let i = 0; i < events.length; i++)
-    guider.train(bundle_test[i], events[i].type);
+    guider.train(events[i]);
 
   res.send(JSON.stringify({ stats: 200 }));
 });
 
 app.post('/predict', function(req, res) {
-  const events = req.body.events;
-  let bundle_test = [];
+  // const events = req.body.events;
+  // const normalize_array = guider.normalize(events);
+  normalize.forEach(element => {
+    guider.predict(element)
+  });
 
-  for(let i = 0; i < events.length; i++) {
-    bundle_test.push([events[i].asesinatos, events[i].violaciones,
-      events[i].balaceras, events[i].robos]);
-  }
-
-  res.send(JSON.stringify(guider.predict(bundle_test[0])));
+  res.send(JSON.stringify(guider.predict(normalize_array[0])));
 });
 
 app.post('/saveconf', function(req, res) {
