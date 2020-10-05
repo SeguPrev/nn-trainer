@@ -1,0 +1,1 @@
+SELECT * FROM [dbo].[Resources] WHERE [dbo].[Resources].[id] = @id
