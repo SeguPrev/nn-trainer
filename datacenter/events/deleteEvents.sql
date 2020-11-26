@@ -1,2 +1,2 @@
-DELETE  [dbo].[Events]
+DELETE FROM [dbo].[Events]
 WHERE   [id] = @id

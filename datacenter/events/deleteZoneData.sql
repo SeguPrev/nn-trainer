@@ -1,0 +1,1 @@
+DELETE FROM [dbo].[Events] WHERE [zone] = @zone;

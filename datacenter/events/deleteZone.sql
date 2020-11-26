@@ -1,2 +1,2 @@
 DELETE  [dbo].[Zones]
-WHERE   [name] = @name
+WHERE   [name] = @zone

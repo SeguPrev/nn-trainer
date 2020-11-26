@@ -1,6 +1,6 @@
 UPDATE [dbo].[Events] 
 SET 
-[name] = @name
+[zone] = @zone
 , [type] = @type
 , [time] = @time
-WHERE [name] = @name
+WHERE [id] = @id

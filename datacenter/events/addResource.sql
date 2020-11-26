@@ -5,6 +5,6 @@ INSERT INTO [dbo].[Resources] (
 )
 VALUES (
     @id
-    , @latitude
-    , @longitude
+    , @lat
+    , @lng
 );

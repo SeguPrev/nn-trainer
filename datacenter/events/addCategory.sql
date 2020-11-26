@@ -3,6 +3,6 @@ INSERT INTO [dbo].[Categories] (
 , [level]
 )
 VALUES (
-    @email
+    @name
     , @level
 );

@@ -1,2 +1,2 @@
 DELETE  [dbo].[Resources]
-WHERE   [id] = @id
+WHERE   [latitude] = @latitude AND [longitude] = @longitude

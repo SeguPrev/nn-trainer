@@ -8,5 +8,5 @@ VALUES (
     @id
     , @zone
     , @type
-    , @time
+    , @date
 );

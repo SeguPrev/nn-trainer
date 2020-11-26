@@ -27,7 +27,7 @@ class DBEngine {
     });
 
     const result = await request.query(query);
-    return result.recordset;
+    return (result.recordset == null) ? [] : result.recordset;
   }
 
 }
