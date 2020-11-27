@@ -4,6 +4,7 @@ const MapGuider = require("../neural_network/mapguider.js");
 
 let router = express.Router();
 const guider = new MapGuider([1, 2, 3, 4]);
+guider.import();
 
 router
   .post("/train", async (req, res) => {
@@ -13,12 +14,7 @@ router
   })
   .post("/predict", async (req, res) => {
       const events = req.body.data;
-      const normalize_array = guider.normalize(events);
-      normalize_array.forEach((element) => {
-        guider.predict(element);
-      });
-
-      res.send(JSON.stringify(guider.predict(normalize_array[0])));
+      res.send(JSON.stringify(guider.predict(events[0])));
   })
   .post("/save", async (req, res) => {
        guider.export();
